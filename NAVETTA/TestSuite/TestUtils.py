@@ -139,9 +139,9 @@ make BDBRMatrix definition ()
 @param write_* used for selecting what types of results to include
 @return a BDBRMatrix definition
 """
-def make_BDBRMatrix_definition(test_names: Iterable[str], layering_func: Callable[[str],Tuple[int]] = lambda _: (-1,), filter_func: Callable[[str],bool] = lambda _: True, write_bdbr: bool = True, write_bits: bool = True, write_psnr: bool = True, write_time: bool = True) -> dict:
+def make_BDBRMatrix_definition(test_names: Iterable[str], layering_func: Callable[[str],Tuple[int]] = lambda _: (-1,), filter_func: Callable[[str],bool] = lambda _: True, write_bdbr: bool = True, write_bits: bool = True, write_psnr: bool = True, write_time: bool = True, name: str = "") -> dict:
     layers = {name : layering_func(name) if filter_func(name) else tuple() for name in test_names}
-    return create_BDBRMatrix_definition(layers, write_bdbr, write_bits, write_psnr, write_time)
+    return create_BDBRMatrix_definition(layers, write_bdbr, write_bits, write_psnr, write_time, name)
 
 T = TypeVar('T')
 Layer_func_t = Callable[[T], Iterable[Union[Tuple[str, int], T]]]
@@ -169,7 +169,7 @@ make AnchorList definition using a single anchor for all tests
 @param test_filter filter anchor-test pairs 
 @param layer_func return either input test name or a tuple of (<test_name>,<target_layer>) for tests
 """
-def make_AnchorList_singleAnchor_definition(global_anchor: str = None, global_tests: Iterable[str] = None, *, bdbr_anchor: Union[str, Tuple[str, int]] = None, bdbr_tests: Iterable[str] = None, bits_anchor: Union[str, Tuple[str, int]] = None, bits_tests: Iterable[str] = None, psnr_anchor: Union[str, Tuple[str, int]] = None, psnr_tests: Iterable[str] = None, time_anchor: Union[str, Tuple[str, int]] = None, time_tests: Iterable[str] = None, test_filter: Callable[[str, str], bool] = lambda *_: True, layer_func: Layer_func_t = lambda t: t) -> dict:
+def make_AnchorList_singleAnchor_definition(global_anchor: str = None, global_tests: Iterable[str] = None, *, bdbr_anchor: Union[str, Tuple[str, int]] = None, bdbr_tests: Iterable[str] = None, bits_anchor: Union[str, Tuple[str, int]] = None, bits_tests: Iterable[str] = None, psnr_anchor: Union[str, Tuple[str, int]] = None, psnr_tests: Iterable[str] = None, time_anchor: Union[str, Tuple[str, int]] = None, time_tests: Iterable[str] = None, test_filter: Callable[[str, str], bool] = lambda *_: True, layer_func: Layer_func_t = lambda t: t, name: str = "") -> dict:
     #Set global values
     layered_bdbr = layered_bits = layerred_psnr = layered_time = None
     if global_anchor:
@@ -190,7 +190,8 @@ def make_AnchorList_singleAnchor_definition(global_anchor: str = None, global_te
     return create_AnchorList_definition(bdbr_def = layered_bdbr,
                                         bits_def = layered_bits,
                                         psnr_def = layered_psnr,
-                                        time_def = layered_time)
+                                        time_def = layered_time,
+                                        name = name)
 
 """
 Make AnchorList definition with per test anchors

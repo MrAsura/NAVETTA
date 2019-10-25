@@ -51,14 +51,14 @@ dt_BDBRM = {__LAYERS:{}, __WRITE_BDBR: True, __WRITE_BITS: True, __WRITE_PSNR: T
 """
 for creating the BDBRMatrix definition
 """
-def create_BDBRMatrix_definition(layers: Dict[str, Tuple[int]], write_bdbr: bool, write_bits: bool, write_psnr: bool, write_time: bool) -> dict:
+def create_BDBRMatrix_definition(layers: Dict[str, Tuple[int]], write_bdbr: bool, write_bits: bool, write_psnr: bool, write_time: bool, name: str = "") -> dict:
     definition = dt_BDBRM.copy()
     definition[__LAYERS] = layers
     definition[__WRITE_BDBR] = write_bdbr
     definition[__WRITE_BITS] = write_bits
     definition[__WRITE_PSNR] = write_psnr
     definition[__WRITE_TIME] = write_time
-    return definition
+    return create_summary_definition(SummaryType.BDBRM, definition, name)
 
 """
 __????:dt_ANCHOR_SUB|None
@@ -77,13 +77,13 @@ AnchorSubType = Dict[str, Union[str,None]]
 """
 Create anchor list definition. Pass in sub definitions for each data type that should be included
 """
-def create_AnchorList_definition(bdbr_def: AnchorSubType, bits_def: AnchorSubType, psnr_def: AnchorSubType, time_def: AnchorSubType) -> dict:
+def create_AnchorList_definition(bdbr_def: AnchorSubType, bits_def: AnchorSubType, psnr_def: AnchorSubType, time_def: AnchorSubType, name: str = "") -> dict:
     definition = dt_ANCHOR.copy()
     definition[__BDBR] = create_AnchorSub_definition(bdbr_def)
     definition[__BITS] = create_AnchorSub_definition(bits_def)
     definition[__PSNR] = create_AnchorSub_definition(psnr_def)
     definition[__TIME] = create_AnchorSub_definition(time_def)
-    return definition
+    return create_summary_definition(SummaryType.BDBRM, definition, name)
 
 """
 Sub anchor list definition. Takes in a list of test anchor pairs with optional layer ids ((<name>,#lid):(<anchor>,#lid))

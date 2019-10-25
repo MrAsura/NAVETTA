@@ -363,7 +363,7 @@ def __writeResults(wb,results,summary_defs):
         res_pos[test] = __writeSheet(n_sheet,res[_RES],res[_SCALE],res[_QPS],res[_INAMES])
 
     #write summary sheets
-    makeSummaries(wb, res_pos, res[_INAMES], **summary_defs)
+    makeSummaries(wb, res_pos, res[_INAMES], *summary_defs)
 
 """
 Run given tests and write results to a exel file
@@ -372,7 +372,7 @@ Run given tests and write results to a exel file
 @param layers: A dict with test names as keys containing a list of layers to include in summary
 @param s2_base: Test name of the s2 summary that should be the base of the comparison
 """
-def runTests( tests, outname, combi = [], layer_combi = [], input_res = False, **summary_defs ):
+def runTests( tests, outname, combi = [], layer_combi = [], input_res = False, *summary_defs ):
     print('Start running tests...')
     nt = 1
     for test in tests:

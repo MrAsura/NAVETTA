@@ -89,10 +89,9 @@ def main():
                                                                time_anchor_func = TU.anchorFuncFactory_match_layer(
                                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])))
 
-    summaries = {sn_BDBRM: matrix_summary,
-                 sn_ANCHOR: anchor_summary}
+    summaries = [matrix_summary, anchor_summary]
 
-    runTests(tests_scal + tests_sim, outname, layer_combi=combi, **summaries)
+    runTests(tests_scal + tests_sim, outname, layer_combi=combi, *summaries)
 
 if __name__ == "__main__":
     print("Execute test file " + __file__)

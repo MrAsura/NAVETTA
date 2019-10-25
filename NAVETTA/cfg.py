@@ -8,8 +8,8 @@ sequence_path = r"D:\seqs\\"
 skvz_bin = r"D:\bins\skvz_v6.exe"
 skvz_ver_bin = r"D:\bins\skvz_v{}.exe"
 shm_bin = r"D:\bins\shm.exe"
-shm_cfg = "D:\cfg\\"
-results = r"F:\r\NAVETTA\\"
+shm_cfg = f"D:\cfg\\"
+results = r"D:\r\notvenctester\\"#r"F:\r\NAVETTA\\"
 
 decoder_bin = r"D:\bins\TAppDecoder.exe" #Used for verifying encodings
 

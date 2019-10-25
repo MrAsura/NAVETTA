@@ -63,7 +63,8 @@ def main():
     test_names = TU.get_test_names(tests_scal) + sim_names
     matrix_summary = TU.make_BDBRMatrix_definition(test_names + TU.get_test_names(tests_sim), write_bdbr = True, write_bits = False, write_psnr = False,
                                                    layering_func = lambda t: (-1,1) if "SCAL" not in t else (-1,),
-                                                   filter_func = lambda t: True if ("BL" in t and "EL" in t) or "SCAL" in t else False)
+                                                   filter_func = lambda t: True if ("BL" in t and "EL" in t) or "SCAL" in t else False,
+                                                   name = "Summary_matrix")
 
     anchor_summary = TU.make_AnchorList_multiAnchor_definition(test_names,
                                                                global_filter = lambda t: True if "SCAL" in t else False,
@@ -71,12 +72,16 @@ def main():
                                                                    lambda t: tuple(a for a in sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a))),
                                                                bdbr_layer_func = TU.layerFuncFactory([[None, 1],]),
                                                                time_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                                   lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])))
+                                                                    lambda t: tuple((a,l) if l >= 0 else a for a in sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])))
 
-    summaries = {sn_BDBRM: matrix_summary,
-                 sn_ANCHOR: anchor_summary}
+    anchor_summary2 = TU.make_AnchorList_multiAnchor_definition(test_names,
+                                                                time_anchor_func = TU.anchorFuncFactory_match_layer(
+                                                                    lambda t: (None,)
+                                                                ))
 
-    runTests(tests_scal + tests_sim, outname, layer_combi=combi, **summaries)
+    summaries = [matrix_summary, anchor_summary, anchor_summary2]
+
+    runTests(tests_scal + tests_sim, outname, layer_combi=combi, *summaries)
 
 if __name__ == "__main__":
     print("Execute test file " + __file__)
