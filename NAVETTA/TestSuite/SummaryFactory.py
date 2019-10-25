@@ -4,15 +4,39 @@ Module for defining and processing summary sheets
 
 import openpyxl as xl
 from openpyxl.utils import get_column_letter
-from openpyxl.formatting.rule import ColorScaleRule
+from openpyxl.formatting.rule import ColorScaleRule, Rule
+from openpyxl.worksheet.worksheet import Worksheet
 from enum import Enum, auto
+from typing import Dict, Tuple, Union, List, Callable
 
 #Define summary types used as keys in definitions
 class SummaryType(Enum):
     BDBRM = auto()
     ANCHOR = auto()
 
-    #Define definition templates for each summary type
+__TYPE_NAMES = {
+    BDBRM: "BDBRMatrix",
+    ANCHOR: "Anchor_list"
+    }
+
+# The container definition for summary types
+__TYPE = "Type" #Type of the summary that is defined
+__NAME = "Name" #Name for the summary.  Will be used as the sheet name
+__DEFINITION = "definition" #Should contain one of the summary type definitions below
+"""
+__DEFINITION: [dt_BDBRM | dt_ANCHOR | ...]
+"""
+dt_BASE = {__TYPE:SummaryType(), __NAME: str(), __DEFINITION: {}}
+
+def create_summary_definition(type: SummaryType, definition: dict, name: str = None) -> dict:
+    new_def = dt_BASE.copy()
+    new_def[__TYPE] = type
+    new_def[__DEFINITION] = definition
+    name = name.strip() if name.strip() else __TYPE_NAMES[type]
+    new_def[__NAME] = name
+    return new_def
+
+######### Define definition templates for each summary type ############
 
 """
 __LAYERS:{<test_name>:<tuple of layers (lid) to include>}
@@ -27,7 +51,7 @@ dt_BDBRM = {__LAYERS:{}, __WRITE_BDBR: True, __WRITE_BITS: True, __WRITE_PSNR: T
 """
 for creating the BDBRMatrix definition
 """
-def create_BDBRMatrix_definition(layers, write_bdbr, write_bits, write_psnr, write_time):
+def create_BDBRMatrix_definition(layers: Dict[str, Tuple[int]], write_bdbr: bool, write_bits: bool, write_psnr: bool, write_time: bool) -> dict:
     definition = dt_BDBRM.copy()
     definition[__LAYERS] = layers
     definition[__WRITE_BDBR] = write_bdbr
@@ -48,10 +72,12 @@ dt_ANCHOR = {__BDBR:{}, __BITS:{}, __PSNR:{}, __TIME:{}}
 dt_ANCHOR_SUB = {<test_name>:(<anchor_test_name>|None,...)}
 """
 
+AnchorSubType = Dict[str, Union[str,None]]
+
 """
 Create anchor list definition. Pass in sub definitions for each data type that should be included
 """
-def create_AnchorList_definition(bdbr_def, bits_def, psnr_def, time_def):
+def create_AnchorList_definition(bdbr_def: AnchorSubType, bits_def: AnchorSubType, psnr_def: AnchorSubType, time_def: AnchorSubType) -> dict:
     definition = dt_ANCHOR.copy()
     definition[__BDBR] = create_AnchorSub_definition(bdbr_def)
     definition[__BITS] = create_AnchorSub_definition(bits_def)
@@ -62,7 +88,7 @@ def create_AnchorList_definition(bdbr_def, bits_def, psnr_def, time_def):
 """
 Sub anchor list definition. Takes in a list of test anchor pairs with optional layer ids ((<name>,#lid):(<anchor>,#lid))
 """
-def create_AnchorSub_definition(definition):
+def create_AnchorSub_definition(definition: Union[None, Tuple[Union[str, Tuple[str, int]], Union[str, Tuple[str,int]]], Dict[Union[str, Tuple[str,int]], Union[str, Tuple[str,int]]]]) -> AnchorSubType:
     from TestSuite import makeSheetLayer, _LID_TOT
     def processTestName(tn):
         if not tn:
@@ -82,36 +108,56 @@ def create_AnchorSub_definition(definition):
         definition = definition.items()
     return {processTestName(name): processTestName(val) for (name, val) in definition if val}
 
+DataRefType = Dict[str,Dict[str,Dict[int,dict]]]
+SummaryRefType = Dict[str,Dict[str,dict]]
+
 """
 Function for creating summary sheets to the given workbook for the given data
 @param wb: work book where sheets will be added
 @param data_refs: references to the data sheets and data cell positions used for the summary in the form data_refs[<test_name>][<seq>][<lid>] = {__KB, __KBS,__PSNR, __TIME}
 @param BDBRMatrix: dict containing the parameters for the BDBRMatrix summary type
 """
-def makeSummaries(wb, data_refs, order = None, **definitions):
-    if sn_BDBRM in definitions:
-        makeBDBRMatrix(wb, data_refs, order, definitions[sn_BDBRM])
-    if sn_ANCHOR in definitions:
-        makeAnchorList(wb, data_refs, order, definitions[sn_ANCHOR])
+def makeSummaries(wb: xl.Workbook, data_refs: DataRefType, *definitions: List[dict], order: List[str] = None) -> None:
+    for definition in definitions:
+        if SummaryType.BDBRM == definition[__TYPE]:
+            makeBDBRMatrix(wb, data_refs, order, definition)
+        elif SummaryType.ANCHOR == definition[__TYPE]:
+            makeAnchorList(wb, data_refs, order, definition)
+        else:
+            print("Not a valid summary type.")
 
 
-def makeBDBRMatrix(wb, data_refs, order, definition):
-    bdbrm_sheet = wb.create_sheet(sn_BDBRM)
+"""
+Return a name for a sheet that does not yet exist based on the given name (return name if it does not exist yet else name#)
+"""
+def __get_new_sheetname(wb: xl.Workbook, name: str) -> str:
+    if name in wb.sheetnames:
+        #If name already exists, add a number to the end and try again
+        postfix = 2
+        while name + str(postfix) in wb.sheetnames:
+            postfix += 1
+        name += str(postfix)
+    return name
+
+def makeBDBRMatrix(wb: xl.Workbook, data_refs: DataRefType, order: List[str], definition: dict) -> None:
+    name = __get_new_sheetname(wb, definition[__NAME])
+    bdbrm_sheet = wb.create_sheet(name)
     expanded_refs = __makeSummary(data_refs, definition[__LAYERS])
-    __writeBDBRMatrix(bdbrm_sheet, expanded_refs, order, **definition)
-    wb.active = wb.index(wb[sn_BDBRM])
+    __writeBDBRMatrix(bdbrm_sheet, expanded_refs, order, **definition[__DEFINITION])
+    wb.active = wb.index(wb[name])
 
-def makeAnchorList(wb, data_refs, order, definition):
-    anchor_sheet = wb.create_sheet(sn_ANCHOR)
+def makeAnchorList(wb: xl.Workbook, data_refs: DataRefType, order: List[str], definition: dict) -> None:
+    name = __get_new_sheetname(wb, definition[__NAME])
+    anchor_sheet = wb.create_sheet(name)
     expanded_refs = __makeSummary(data_refs)
-    __writeAnchorList(anchor_sheet, expanded_refs, order, **definition)
-    wb.active = wb.index(wb[sn_ANCHOR])
+    __writeAnchorList(anchor_sheet, expanded_refs, order, **definition[__DEFINITION])
+    wb.active = wb.index(wb[name])
 
 """
 Transform res_pos into summary test structure making test layers into their own tests
 @return dict of the form res[<test_name>][<seq>] = {__KB, __KBS,__PSNR, __TIME}
 """
-def __makeSummary(res_pos,layers={}):
+def __makeSummary(res_pos: DataRefType, layers: dict = {}) -> SummaryRefType:
     from TestSuite import _LID_TOT, makeSheetLayer
     res = {}
     for (test,item) in res_pos.items():
@@ -140,7 +186,7 @@ def __makeSummary(res_pos,layers={}):
 """
 Switch the first and second level keys of the dict
 """
-def __flip_dict(old_d):
+def __flip_dict(old_d: dict) -> dict:
     new_d = {val_key: {} for val in old_d.values() for val_key in val.keys()}
     for (key, val) in old_d.items():
         for (val_key, sub_val) in val.items():
@@ -148,7 +194,7 @@ def __flip_dict(old_d):
     return new_d
 
 
-def getMaxLength( string_list ):
+def getMaxLength( string_list: list ) -> str:
     return max((len(x) for x in string_list))
 
 
@@ -179,7 +225,7 @@ __AL_ANCHOR = r"Sequences \ Anchor:"
 Handle writing the anchor list structure
 """
 
-def __writeAnchorList(sheet, data_refs, order = None, *, bdbr, bits, psnr, time, **other):
+def __writeAnchorList(sheet: Worksheet, data_refs: SummaryRefType, order: List[stry] = None, *, bdbr: AnchorSubType, bits: AnchorSubType, psnr: AnchorSubType, time: AnchorSubType, **other: dict) -> None:
     from TestSuite import _PSNR, _KBS, _KB, _TIME
     seq_ref = __flip_dict(data_refs) # transform data_refs to seq_ref[<seq>][<test_name>] order
     order = order if order else list(seq_ref.keys())
@@ -307,7 +353,7 @@ def __writeAnchorList(sheet, data_refs, order = None, *, bdbr, bits, psnr, time,
         sheet.conditional_formatting.add(f_range, c_rule)
 
 
-def __writeAnchorListHeader(sheet, sub_def, row, col, allow_none = True):
+def __writeAnchorListHeader(sheet: Worksheet, sub_def: AnchorSubType, row: int, col: int, allow_none: bool = True) -> None:
     #Write horizontal headers/test names
     tmp_col = col
     for (test,anchors) in sub_def.items():
@@ -320,7 +366,7 @@ def __writeAnchorListHeader(sheet, sub_def, row, col, allow_none = True):
     return tmp_col - 1
 
 
-def __writeAnchorListData(sheet, ref, sub_def, row, col, *, data_func, data_format, number_format = None, number_style = 'Percent', abs_format = None, abs_style = 'Comma'):
+def __writeAnchorListData(sheet: Worksheet, ref: Dict[str, dict], sub_def: AnchorSubType, row: int, col: int, *, data_func: Callable[[Dict[str, dict], str], Union[float,int]], data_format: str, number_format: Union[None, str] = None, number_style: str = 'Percent', abs_format: Union[None, str] = None, abs_style: str = 'Comma') -> None:
     from TestSuite import parseSheetLayer
     #final_r = row+len(data.keys())
     #final_c = col+len(data.keys())
@@ -365,7 +411,7 @@ __S_HEADER = "Result summary matrix (bdrate, bit, PSNR, Time comparisons)"
 """
 Handle writing the BDBRMatrix summary sheet
 """
-def __writeBDBRMatrix(sheet, data_refs, order = None, *, write_bdbr, write_bits, write_psnr, write_time, **other):
+def __writeBDBRMatrix(sheet: Worksheet, data_refs: SummaryRefType, order: List[str] = None, *, write_bdbr: bool, write_bits:bool, write_psnr: bool, write_time: bool, **other: dict):
     from TestSuite import _PSNR, _KBS, _KB, _TIME
     
     seq_ref = __flip_dict(data_refs) # transform data_refs to seq_ref[<seq>][<test_name>] order
@@ -454,7 +500,7 @@ def __writeBDBRMatrix(sheet, data_refs, order = None, *, write_bdbr, write_bits,
 Write summary base header
 @return row and col of start of data field
 """
-def __writeSummaryMatrixHeader(sheet, tests, row, col):
+def __writeSummaryMatrixHeader(sheet: Worksheet, tests: List[str], row: int, col: int) -> Tuple[int,int]:
     d_row = row + 1
     d_col = col + 1
     #Write horizontal headers/test names
@@ -474,7 +520,7 @@ def __writeSummaryMatrixHeader(sheet, tests, row, col):
 """
 Write summary matrix data array
 """
-def __writeSummaryDataMatrix(sheet, data, row, col, *, data_func, data_format, number_format = None, number_style = 'Percent', def_val = '-', color_scale_rule):
+def __writeSummaryDataMatrix(sheet: Worksheet, data: Dict[str, dict], row: int, col: int, *, data_func: Callable[[Dict[str, dict], str], Union[float,int]], data_format: str, number_format: Union[str, None] = None, number_style: str = 'Percent', def_val: str = '-', color_scale_rule: Rule):
     from TestSuite import parseSheetLayer
     test_col = col - 1
     test_row = row - 1
