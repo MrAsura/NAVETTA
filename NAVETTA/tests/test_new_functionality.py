@@ -3,7 +3,7 @@ Test new functionality
 """
 
 import cfg
-from ..TestSuite import runTests, SummaryType, TestUtils as TU
+from TestSuite import runTests, SummaryType, TestUtils as TU
 
 import re
 import operator as op
@@ -81,7 +81,8 @@ def main():
 
     summaries = [matrix_summary, anchor_summary, anchor_summary2]
 
-    runTests(tests_scal + tests_sim, outname, layer_combi=combi, *summaries)
+    runTests(tests_scal + tests_sim, outname, *summaries,
+             layer_combi = combi)
 
 if __name__ == "__main__":
     print("Execute test file " + __file__)

@@ -12,8 +12,8 @@ test_scripts = {} #Dict of all test scripts in the tests package and the respect
 __path = [os.path.abspath(r"tests"),]
 if "__path__" in globals():
     __path = __path__
-for loader, module_name, is_pkg in pkgu.walk_packages(__path):
-    if not is_pkg and "__main__" != module_name:
+for loader, module_name, is_pkg in pkgu.walk_packages(__path, ""):
+    if not is_pkg and "__main__" not in module_name:
         module = loader.find_module(module_name).load_module(module_name)
         test_scripts[module_name] = getattr(module, "main", lambda: runpy.run_module(module))
         
@@ -31,10 +31,10 @@ def main():
         test_func = None
         if script in test_scripts:
             # Given script is in test_scripts
-            test_func = test_scripts[script]()
-        elif ".py" in script:
+            test_func = test_scripts[script]
+        elif ".py" in script and os.path.exists(script) and os.path.isfile(script):
             # Possiply a external script given run it directly
-            test_func = lambda: runpy.run_path(script)
+            test_func = lambda: runpy.run_path(script, run_name = '__main__')
         else:
             print("Script {} not found.".format(script))
 

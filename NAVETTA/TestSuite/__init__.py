@@ -1,5 +1,5 @@
 from .TestSuite import runTests
-import TestUtils
+import TestSuite.TestUtils as TestUtils
 from .TestUtils import TestParameterGroup
 from .SummaryFactory import SummaryType
 

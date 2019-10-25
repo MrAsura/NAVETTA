@@ -8,7 +8,7 @@ from enum import Enum, auto
 from copy import deepcopy
 from typing import List, Dict, Tuple, Any, Callable, Union, Iterable, TypeVar, SupportsFloat
 
-from ..TestInstances import skvzTestInstance, shmTestInstance
+from TestInstances import skvzTestInstance, shmTestInstance
 from .TestSuite import makeLayerCombiName
 from .SummaryFactory import create_BDBRMatrix_definition, create_AnchorList_definition
 
