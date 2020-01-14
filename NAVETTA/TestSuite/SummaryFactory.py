@@ -73,7 +73,7 @@ dt_ANCHOR = {__BDBR:{}, __BITS:{}, __PSNR:{}, __TIME:{}}
 dt_ANCHOR_SUB = {<test_name>:(<anchor_test_name>|None,...)}
 """
 
-AnchorSubType = Dict[str, Union[str,None]]
+AnchorSubType = Dict[str, Tuple[Union[str,None],...]]
 
 """
 Create anchor list definition. Pass in sub definitions for each data type that should be included
