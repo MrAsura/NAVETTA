@@ -137,6 +137,7 @@ make BDBRMatrix definition ()
 @param layering_func function that takes in test names and outputs layers to be included
 @param filter_func optional function for selecting tests from test_names
 @param write_* used for selecting what types of results to include
+@param name name used for the summary definition
 @return a BDBRMatrix definition
 """
 def make_BDBRMatrix_definition(test_names: Iterable[str], layering_func: Callable[[str],Tuple[int]] = lambda _: (-1,), filter_func: Callable[[str],bool] = lambda _: True, write_bdbr: bool = True, write_bits: bool = True, write_psnr: bool = True, write_time: bool = True, name: str = "") -> dict:
@@ -158,6 +159,7 @@ def anchorFuncFactory_match_layer(func: Callable[[str], Iterable[Union[str,None,
 make a layer function that returns a tuple of test-layer-pairs
 @param layers a list of layer inds or None if no layer should be added
 @param conds list of functions that should return true if matching list of inds (layers[i]<->conds[i]) should be added for given test 
+@return a layer function
 """
 def layerFuncFactory(layers: Iterable[Iterable[Union[int, None]]], conds: Iterable[Callable[[str], bool]] = [lambda _: True,]) -> Layer_func_t:
     return lambda t: tuple((t, l) if l else t for (layer, cond) in zip(layers, conds) if cond(t) for l in layer)
@@ -168,6 +170,7 @@ make AnchorList definition using a single anchor for all tests
 @param global_tests/*_tests names of tests to include in all or the specidied types of tests (can override global)
 @param test_filter filter anchor-test pairs 
 @param layer_func return either input test name or a tuple of (<test_name>,<target_layer>) for tests
+@param name name used for the summary definition
 """
 def make_AnchorList_singleAnchor_definition(global_anchor: str = None, global_tests: Iterable[str] = None, *, bdbr_anchor: Union[str, Tuple[str, int]] = None, bdbr_tests: Iterable[str] = None, bits_anchor: Union[str, Tuple[str, int]] = None, bits_tests: Iterable[str] = None, psnr_anchor: Union[str, Tuple[str, int]] = None, psnr_tests: Iterable[str] = None, time_anchor: Union[str, Tuple[str, int]] = None, time_tests: Iterable[str] = None, test_filter: Callable[[str, str], bool] = lambda *_: True, layer_func: Layer_func_t = lambda t: t, name: str = "") -> dict:
     #Set global values
@@ -199,8 +202,10 @@ Make AnchorList definition with per test anchors
 @param global_anchor_func/*_anchor_func functions that return the name of anchor used for all tests across all the types of tests or the specified types of tests (can override global). None can be specified to get absolute values (not applicable to bdbr). May also add layer info in case multiple anchors are returned. Returned anchors may contain layer info i.e be of the form (<test_name>,<target_layer>)
 @param global_filter/*_filter filter out unwanted tests.
 @param global_layer_func/*_layer_func return either input test name or a tuple of (<test_name>,<target_layer>)
+@param name name used for the summary definition
+@return an anchor list definition
 """
-def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor_func: Anchor_func_t = None, global_filter: Callable[[str], bool] = lambda _: True, global_layer_func: Layer_func_t = lambda t: (t,), *, bdbr_anchor_func: Anchor_func_t = None, bdbr_filter: Callable[[str], bool] = None, bdbr_layer_func: Layer_func_t = None, bits_anchor_func: Anchor_func_t = None, bits_filter: Callable[[str], bool] = None, bits_layer_func: Layer_func_t = None, psnr_anchor_func: Anchor_func_t = None, psnr_filter: Callable[[str], bool] = None, psnr_layer_func: Layer_func_t = None, time_anchor_func: Anchor_func_t = None, time_filter: Callable[[str], bool] = None, time_layer_func: Layer_func_t = None) -> dict:
+def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor_func: Anchor_func_t = None, global_filter: Callable[[str], bool] = lambda _: True, global_layer_func: Layer_func_t = lambda t: (t,), *, bdbr_anchor_func: Anchor_func_t = None, bdbr_filter: Callable[[str], bool] = None, bdbr_layer_func: Layer_func_t = None, bits_anchor_func: Anchor_func_t = None, bits_filter: Callable[[str], bool] = None, bits_layer_func: Layer_func_t = None, psnr_anchor_func: Anchor_func_t = None, psnr_filter: Callable[[str], bool] = None, psnr_layer_func: Layer_func_t = None, time_anchor_func: Anchor_func_t = None, time_filter: Callable[[str], bool] = None, time_layer_func: Layer_func_t = None, NameError: str = "") -> dict:
     layered_bdbr = layered_bits = layered_psnr = layered_time = None
     
     if global_anchor_func:
@@ -234,7 +239,8 @@ def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor
     return create_AnchorList_definition(bdbr_def = layered_bdbr,
                                         bits_def = layered_bits,
                                         psnr_def = layered_psnr,
-                                        time_def = layered_time)
+                                        time_def = layered_time,
+                                        name = name)
 
 
 """
@@ -315,7 +321,7 @@ class TestParameterGroup:
 
 
     """
-    Set function that is 
+    Set function that is used to transform the generated parameter sets
     @return self
     """
     def set_param_group_transformer(self, func: Callable[..., dict]) -> 'TestParameterGroup':
