@@ -172,18 +172,18 @@ make AnchorList definition using a single anchor for all tests
 @param layer_func return either input test name or a tuple of (<test_name>,<target_layer>) for tests
 @param name name used for the summary definition
 """
-def make_AnchorList_singleAnchor_definition(global_anchor: str = None, global_tests: Iterable[str] = None, *, bdbr_anchor: Union[str, Tuple[str, int]] = None, bdbr_tests: Iterable[str] = None, bits_anchor: Union[str, Tuple[str, int]] = None, bits_tests: Iterable[str] = None, psnr_anchor: Union[str, Tuple[str, int]] = None, psnr_tests: Iterable[str] = None, time_anchor: Union[str, Tuple[str, int]] = None, time_tests: Iterable[str] = None, test_filter: Callable[[str, str], bool] = lambda *_: True, layer_func: Layer_func_t = lambda t: t, name: str = "") -> dict:
+def make_AnchorList_singleAnchor_definition(global_anchor: str = None, global_tests: Iterable[str] = None, *, bdbr_anchor: Union[str, Tuple[str, int]] = None, bdbr_tests: Iterable[str] = None, bits_anchor: Union[str, Tuple[str, int]] = None, bits_tests: Iterable[str] = None, psnr_anchor: Union[str, Tuple[str, int]] = None, psnr_tests: Iterable[str] = None, time_anchor: Union[str, Tuple[str, int]] = None, time_tests: Iterable[str] = None, test_filter: Callable[[str, str], bool] = lambda *_: True, layer_func: Layer_func_t = lambda t: (t,), name: str = "") -> dict:
     #Set global values
-    layered_bdbr = layered_bits = layerred_psnr = layered_time = None
+    layered_bdbr = layered_bits = layered_psnr = layered_time = None
     if global_anchor:
         bdbr_anchor = bits_anchor = psnr_anchor = time_anchor = global_anchor
     if global_tests:
-        layered_bdbr = layered_bits = layerred_psnr = layered_time = [(test_l, (global_anchor,)) for test in global_tests if test_filter(global_anchor,test) for test_l in layer_func(test)]
+        layered_bdbr = layered_bits = layered_psnr = layered_time = [(test_l, (global_anchor,)) for test in global_tests if test_filter(global_anchor,test) for test_l in layer_func(test)]
     
     #Construct per result type definitions
     if bdbr_tests:
         layered_bdbr = [(test_l, (bdbr_anchor,)) for test in bdbr_tests if test_filter(bdbr_anchor,test) for test_l in layer_func(test)]
-    if bdbr_tests:
+    if bits_tests:
         layered_bits = [(test_l, (bits_anchor,)) for test in bits_tests if test_filter(bits_anchor,test) for test_l in layer_func(test)]
     if psnr_tests:
         layered_psnr = [(test_l, (psnr_anchor,)) for test in psnr_tests if test_filter(psnr_anchor,test) for test_l in layer_func(test)]
