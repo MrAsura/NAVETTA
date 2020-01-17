@@ -25,6 +25,9 @@
     <Compile Include="cfg.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="TestInstances\kvzTestInstance.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="TestInstances\shmTestInstance.py">
       <SubType>Code</SubType>
     </Compile>
@@ -50,6 +53,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tests\ISCAS2020_tests.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\kvz_gop8_param_mod_tests.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tests\test_new_functionality.py">

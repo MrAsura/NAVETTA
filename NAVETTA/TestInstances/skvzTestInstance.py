@@ -7,7 +7,7 @@ import hashlib
 import os
 
 class skvzTestInstance(TestInstance):
-    """Implements the kvazaar test instance class"""
+    """Implements the scalable kvazaar test instance class"""
         
     __LAYER = "--layer"
     __LAYER_RES = "--layer-res"
@@ -17,8 +17,8 @@ class skvzTestInstance(TestInstance):
     __OUTPUT = "--output"
     __DEBUG = "--debug"
 
-    __RES = r"output"
-    __FS = r"file size"
+    _RES = r"output"
+    _FS = r"file size"
 
     """
     Create a test instance object
@@ -196,24 +196,24 @@ class skvzTestInstance(TestInstance):
                     stats = os.stat(outfile)
                     #self._results[seq][qp] = {self.__RES: out[1].decode(), self.__FS: stats.st_size}
                     lf.seek(0) #Need to move to start of file to read output
-                    self._results[seq][qp] = {self.__RES: lf.read(), self.__FS: stats.st_size}
+                    self._results[seq][qp] = {self._RES: lf.read(), self._FS: stats.st_size}
                     i = i + 1
                     print("    {} of {} runs complete.\r".format(i,len(qps.keys())),end='')
             #print("")
 
-    __res_regex = r"\sProcessed\s(\d+)\sframes\sover\s(\d+)\slayer\(s\),\s*(\d+)\sbits\sAVG\sPSNR:\s(\d+[.,]\d+)\s(\d+[.,]\d+)\s(\d+[.,]\d+)"
-    __lres_regex_format = r"\s\sLayer\s{lid}:\s*(\d+)\sbits,\sAVG\sPSNR:\s(\d+[.,]\d+)\s(\d+[.,]\d+)\s(\d+[.,]\d+)"
-    __time_regex = r"\sEncoding\stime:\s(\d+.\d+)\ss."
+    _res_regex = r"\sProcessed\s(\d+)\sframes\sover\s(\d+)\slayer\(s\),\s*(\d+)\sbits\sAVG\sPSNR:\s(\d+[.,]\d+)\s(\d+[.,]\d+)\s(\d+[.,]\d+)"
+    _lres_regex_format = r"\s\sLayer\s{lid}:\s*(\d+)\sbits,\sAVG\sPSNR:\s(\d+[.,]\d+)\s(\d+[.,]\d+)\s(\d+[.,]\d+)"
+    _time_regex = r"\sEncoding\stime:\s(\d+.\d+)\ss."
 
     #Version 5+ res regex
-    __res_regex_v5 = r"\sProcessed\s(\d+)\sframes\sover\s(\d+)\slayer\(s\),\s*(\d+)\sbits\sAVG\sPSNR\sY\s(\d+[.,]\d+)\sU\s(\d+[.,]\d+)\sV\s(\d+[.,]\d+)"
-    __lres_regex_v5_format = r"\s\sLayer\s{lid}:\s*(\d+)\sbits,\sAVG\sPSNR\sY\s(\d+[.,]\d+)\sU\s(\d+[.,]\d+)\sV\s(\d+[.,]\d+)"
+    _res_regex_v5 = r"\sProcessed\s(\d+)\sframes\sover\s(\d+)\slayer\(s\),\s*(\d+)\sbits\sAVG\sPSNR\sY\s(\d+[.,]\d+)\sU\s(\d+[.,]\d+)\sV\s(\d+[.,]\d+)"
+    _lres_regex_v5_format = r"\s\sLayer\s{lid}:\s*(\d+)\sbits,\sAVG\sPSNR\sY\s(\d+[.,]\d+)\sU\s(\d+[.,]\d+)\sV\s(\d+[.,]\d+)"
 
     """
     Parse kb/s from test results 
     """
     @staticmethod
-    def __parseKBS(res,lres,nl,l_tot):
+    def _parseKBS(res,lres,nl,l_tot):
         vals = {}
         (frames,bits) = res.group(1,3)
         lframes = int(frames)/nl
@@ -230,7 +230,7 @@ class skvzTestInstance(TestInstance):
     Parse kb from test results
     """
     @staticmethod
-    def __parseKB(res,lres,nl,l_tot):
+    def _parseKB(res,lres,nl,l_tot):
         vals = {}
         bits = res.group(3)
         for lid in range(nl):
@@ -246,7 +246,7 @@ class skvzTestInstance(TestInstance):
     Parse kb from test results
     """
     @staticmethod
-    def __parseKB2(res,lres,nl,l_tot,fs):
+    def _parseKB2(res,lres,nl,l_tot,fs):
         vals = {}
         bits = res.group(3)
         for lid in range(nl):
@@ -262,7 +262,7 @@ class skvzTestInstance(TestInstance):
     Parse kb from test results
     """
     @staticmethod
-    def __parseKBS2(res,lres,nl,l_tot,fs):
+    def _parseKBS2(res,lres,nl,l_tot,fs):
         vals = {}
         bits = res.group(3)
         frames = int(res.group(1))
@@ -279,7 +279,7 @@ class skvzTestInstance(TestInstance):
     Parse Time
     """
     @staticmethod
-    def __parseTime(res,lres,nl,l_tot):
+    def _parseTime(res,lres,nl,l_tot):
         vals = {}
         ttime = res.group(1)
         for lid in range(nl):
@@ -295,7 +295,7 @@ class skvzTestInstance(TestInstance):
     Parse psnr from test results
     """
     @staticmethod
-    def __parsePSNR(res,lres,nl,l_tot):
+    def _parsePSNR(res,lres,nl,l_tot):
         vals = {}
         for lid in range(nl):
             if lres[lid]:
@@ -309,30 +309,30 @@ class skvzTestInstance(TestInstance):
     Parse needed values
     """
     @classmethod
-    def __parseVals(cls,results,l_tot,ver):
+    def _parseVals(cls,results,l_tot,ver):
         trgt = {}
-        res = results[cls.__RES]
-        fs = results[cls.__FS]
+        res = results[cls._RES]
+        fs = results[cls._FS]
         if ver <= 4:
-            res_ex = re.search(cls.__res_regex, str(res))
+            res_ex = re.search(cls._res_regex, str(res))
         else:
-            res_ex = re.search(cls.__res_regex_v5, str(res))
-        time_ex = re.search(cls.__time_regex, str(res))
+            res_ex = re.search(cls._res_regex_v5, str(res))
+        time_ex = re.search(cls._time_regex, str(res))
         lres_ex = {}
         num_layers = int(res_ex.group(2))
         layers = tuple(range(num_layers))
         for lid in layers:
             if ver <= 4:
-                lres_ex[lid] = re.search(cls.__lres_regex_format.format(lid=lid), str(res))
+                lres_ex[lid] = re.search(cls._lres_regex_format.format(lid=lid), str(res))
             else:
-                lres_ex[lid] = re.search(cls.__lres_regex_v5_format.format(lid=lid), str(res))
+                lres_ex[lid] = re.search(cls._lres_regex_v5_format.format(lid=lid), str(res))
         layers = layers + (l_tot,)
-        #kbs = cls.__parseKBS(res_ex,lres_ex,num_layers,l_tot)
-        #kb = cls.__parseKB(res_ex,lres_ex,num_layers,l_tot)
-        kbs = cls.__parseKBS2(res_ex,lres_ex,num_layers,l_tot,fs)
-        kb = cls.__parseKB2(res_ex,lres_ex,num_layers,l_tot,fs)
-        time = cls.__parseTime(time_ex,lres_ex,num_layers,l_tot)
-        psnr = cls.__parsePSNR(res_ex,lres_ex,num_layers,l_tot)
+        #kbs = cls._parseKBS(res_ex,lres_ex,num_layers,l_tot)
+        #kb = cls._parseKB(res_ex,lres_ex,num_layers,l_tot)
+        kbs = cls._parseKBS2(res_ex,lres_ex,num_layers,l_tot,fs)
+        kb = cls._parseKB2(res_ex,lres_ex,num_layers,l_tot,fs)
+        time = cls._parseTime(time_ex,lres_ex,num_layers,l_tot)
+        psnr = cls._parsePSNR(res_ex,lres_ex,num_layers,l_tot)
         return (kbs,kb,time,psnr,layers)
 
 
@@ -346,7 +346,7 @@ class skvzTestInstance(TestInstance):
         results = {}
         for (seq,qps) in self._results.items():
             for (qp,res) in qps.items():
-                (kbs,kb,time,psnr,lids) = type(self).__parseVals(res,l_tot,self._version)
+                (kbs,kb,time,psnr,lids) = self._parseVals(res,l_tot,self._version)
                 for lid in lids:
                     resBuildFunc(results,seq=seq,qp=qp,lid=lid,kbs=kbs[lid],kb=kb[lid],time=time[lid],psnr=psnr[lid])
         return results

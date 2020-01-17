@@ -8,7 +8,7 @@ from enum import Enum, auto
 from copy import deepcopy
 from typing import List, Dict, Tuple, Any, Callable, Union, Iterable, TypeVar, SupportsFloat
 
-from TestInstances import skvzTestInstance, shmTestInstance
+from TestInstances import skvzTestInstance, shmTestInstance, kvzTestInstance
 from .TestSuite import makeLayerCombiName
 from .SummaryFactory import create_BDBRMatrix_definition, create_AnchorList_definition
 
@@ -364,7 +364,11 @@ class TestParameterGroup:
     def to_shm_test_instance(self) -> List[shmTestInstance]:
         return [shmTestInstance(**param) for param in self.dump()]
 
-
+    """
+    Return a list of kvzTestInstances
+    """
+    def to_kvz_test_instance(self) -> List[kvzTestInstance]:
+        return [kvzTestInstance(**param) for param in self.dump()]
 
     """
     Return a deep copy the parameter group
