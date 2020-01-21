@@ -165,7 +165,7 @@ class shmTestInstance(TestInstance):
         def cb_err( *args, **kwargs ):
             print("Error in worker: ", args, *args, **kwargs) 
             
-        pool = Pool(processes = 3)
+        pool = Pool(processes = 8)
         print("Start running {name} tests for sequences:".format(name=self._test_name))
         # Add test to pool and run in parallel
         line_sep = "\t|"

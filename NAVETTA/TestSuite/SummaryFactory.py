@@ -7,17 +7,19 @@ from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import ColorScaleRule, Rule
 from openpyxl.worksheet.worksheet import Worksheet
 from enum import Enum, auto
-from typing import Dict, Tuple, Union, List, Callable
+from typing import Dict, Tuple, Union, List, Callable, Iterable
 
 #Define summary types used as keys in definitions
 class SummaryType(Enum):
     NONE = 0
     BDBRM = auto()
     ANCHOR = auto()
+    CURVE = auto()
 
 __TYPE_NAMES = {
     SummaryType.BDBRM: "BDBRMatrix",
-    SummaryType.ANCHOR: "Anchor_list"
+    SummaryType.ANCHOR: "Anchor_list",
+    SummaryType.CURVE: "Curve_chart"
     }
 
 # The container definition for summary types
@@ -109,8 +111,37 @@ def create_AnchorSub_definition(definition: Union[None, Tuple[Union[str, Tuple[s
         definition = definition.items()
     return {processTestName(name): processTestName(val) for (name, val) in definition if val}
 
-DataRefType = Dict[str,Dict[str,Dict[int,dict]]]
-SummaryRefType = Dict[str,Dict[str,dict]]
+"""
+__TESTS: ((<name>,#lid) | <name>,...)  
+__CHARTS:((<X_Data_type>,<Y_Data_type>),...)
+?_Data_type: psnr | rate | time 
+"""
+__TESTS = "tests"
+__CHARTS = "charts"
+__RATE = "rate"
+dt_CURVE = {__TESTS:(), __CHARTS:()}
+
+"""
+Create Curve Chart definition.
+"""
+def create_CurveChart_definition(tests: Iterable[Union[str, Tuple[str, int]]], charts: Iterable[Tuple[int,int]]):
+    def processTestName(tn):
+        if not tn:
+            return None
+        if isinstance(tn, str):
+            return tn
+        if len(tn) == 2 and isinstance(tn, tuple):
+            if isinstance(tn[0], str) and isinstance(tn[1], int):
+                return makeSheetLayer(tn[0], tn[1]) if tn[1] != _LID_TOT else tn[0]
+        return tuple(processTestName(test) for test in tn)
+
+    definition = dt_CURVE.copy()
+    definition[__TESTS] = processTestName(tests)
+    chart_data_types = [__PSNR, __RATE, __TIME]
+    definition[__CHARTS] = (c for c in charts if c[0] in chart_data_types and c[1] in chart_data_types)
+
+DataRefType = Dict[str,Dict[str,Dict[int,dict]]] #DataRef[<test_name>][<seq>][<lid>] = {__KB, __KBS,__PSNR, __TIME}
+SummaryRefType = Dict[str,Dict[str,dict]] #SummaryRef[<test_name>][<seq>] = {__KB, __KBS,__PSNR, __TIME}
 
 """
 Function for creating summary sheets to the given workbook for the given data
@@ -124,6 +155,8 @@ def makeSummaries(wb: xl.Workbook, data_refs: DataRefType, *definitions: List[di
             makeBDBRMatrix(wb, data_refs, order, definition)
         elif SummaryType.ANCHOR == definition[__TYPE]:
             makeAnchorList(wb, data_refs, order, definition)
+        elif SummaryType.CURVE == definition[__TYPE]:
+            makeCurveChart(wb, data_refs, order, definition)
         else:
             print("Not a valid summary type.")
 
@@ -152,6 +185,13 @@ def makeAnchorList(wb: xl.Workbook, data_refs: DataRefType, order: List[str], de
     anchor_sheet = wb.create_sheet(name)
     expanded_refs = __makeSummary(data_refs)
     __writeAnchorList(anchor_sheet, expanded_refs, order, **definition[__DEFINITION])
+    wb.active = wb.index(wb[name])
+
+def makeCurveChart(wb: xl.Workbook, data_refs: DataRefType, order: List[str], definition: dict) -> None:
+    name = __get_new_sheetname(wb, definition[__NAME])
+    curve_sheet = wb.create_sheet(name)
+    expanded_refs = __makeSummary(data_refs)
+    __writeCurveChart(anchor_sheet, expanded_refs, order, **definition[__DEFINITION])
     wb.active = wb.index(wb[name])
 
 """
@@ -295,9 +335,7 @@ def __writeAnchorList(sheet: Worksheet, data_refs: SummaryRefType, order: List[s
             __writeAnchorListData(sheet, seq_ref[seq], psnr, row + header_offset, pcol,
                                      data_func = lambda data, test: data[test][_PSNR],
                                      data_format = __S_PSNR_FORMAT,
-                                     abs_format = __S_PSNR_ABS_FORMAT,
-                                     data_style = 'Comma',
-                                     def_val = 0)
+                                     abs_format = __S_PSNR_ABS_FORMAT)
                 # Write sequence
             sheet.cell(row = row + header_offset, column = pcol - 1).value = __AL_SEQ_FORMAT.format(seq)
 
@@ -472,7 +510,7 @@ def __writeBDBRMatrix(sheet: Worksheet, data_refs: SummaryRefType, order: List[s
             __writeSummaryDataMatrix(sheet, ref, prow, colb,
                                      data_func = lambda data, test: data[test][_PSNR],
                                      data_format = __S_PSNR_FORMAT,
-                                     data_style = 'Comma',
+                                     number_style = 'Comma',
                                      def_val = 0,
                                      color_scale_rule = ColorScaleRule(start_type='percentile', start_value=90, start_color='63BE7B',
                                                                        mid_type='num', mid_value=0, mid_color='FFFFFF',
@@ -545,3 +583,38 @@ def __writeSummaryDataMatrix(sheet: Worksheet, data: Dict[str, dict], row: int, 
     form_range = "{}:{}".format(get_column_letter(col)+str(row),get_column_letter(final_c)+str(final_r))
     sheet.conditional_formatting.add(form_range, color_scale_rule)
 
+
+
+#######################################
+# curve_chart summary type definitions #
+#######################################
+
+def __writeCurveChart(sheet: Worksheet, data_refs: SummaryRefType, order: List[str] = None, *, bdbr: AnchorSubType, bits: AnchorSubType, psnr: AnchorSubType, time: AnchorSubType, **other: dict) -> None:
+    tests = []
+    refs = __writeCurveChartData(sheet, tests, order, data)
+    __writeCharts(sheet, tests, order, refs)
+
+# Write data used by charts and return per test Reference ranges
+def __writeCurveChartData(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], data: Dict[str, dict]) -> dict:
+    to_write_data = []
+    out_ref = {}
+
+    for test in tests:
+        to_write_data.append([test,])
+        for seq in order:
+            to_write_data.append([seq,])
+
+            to_write_data.append(["", "Data Type", "Data Point 1", "Data Point 2", "Data Point 3", "Data Point 4"])
+
+            to_write_data.append(["", __KBS, data[test][seq][__KBS]]) 
+            to_write_data.append(["", __PSNR, data[test][seq][__PSNR]]) 
+            to_write_data.append(["", __TIME, data[test][seq][__TIME]]) 
+
+    for row in to_write_data:
+        sheet.append(row)
+
+    return out_ref
+
+# Create chart objects based on the given Reference ranges and 
+def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], data: Dict[str, dict]) -> None:
+    pass
