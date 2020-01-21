@@ -52,6 +52,9 @@
     <Compile Include="TestSuite\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="tests\ICIP2020_tests.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="tests\ISCAS2020_tests.py">
       <SubType>Code</SubType>
     </Compile>

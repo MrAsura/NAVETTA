@@ -40,8 +40,8 @@ class shmTestInstance(TestInstance):
     __FS = r"file size"
     __ERR = r"errors"
     
-    def __init__(self, test_name, configs, inputs = None, input_sizes = [()], input_names = None, layer_args = (), layer_sizes = [()], input_layer_scales = (), qps = (22, 27, 32, 37), out_name = r'', bin_name = cfg.shm_bin, version=0, **misc):
-
+    def __init__(self, test_name, configs, inputs = None, input_sizes = [None], input_names = [None], layer_args = (), layer_sizes = [None], input_layer_scales = (), qps = (22, 27, 32, 37), out_name = r'', bin_name = cfg.shm_bin, version=0, **misc):
+        self._layer_sizes = layer_sizes
         self._configs = configs
         self._inputs = inputs
         self._qps = qps

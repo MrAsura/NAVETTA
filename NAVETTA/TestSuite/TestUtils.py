@@ -205,7 +205,7 @@ Make AnchorList definition with per test anchors
 @param name name used for the summary definition
 @return an anchor list definition
 """
-def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor_func: Anchor_func_t = None, global_filter: Callable[[str], bool] = lambda _: True, global_layer_func: Layer_func_t = lambda t: (t,), *, bdbr_anchor_func: Anchor_func_t = None, bdbr_filter: Callable[[str], bool] = None, bdbr_layer_func: Layer_func_t = None, bits_anchor_func: Anchor_func_t = None, bits_filter: Callable[[str], bool] = None, bits_layer_func: Layer_func_t = None, psnr_anchor_func: Anchor_func_t = None, psnr_filter: Callable[[str], bool] = None, psnr_layer_func: Layer_func_t = None, time_anchor_func: Anchor_func_t = None, time_filter: Callable[[str], bool] = None, time_layer_func: Layer_func_t = None, NameError: str = "") -> dict:
+def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor_func: Anchor_func_t = None, global_filter: Callable[[str], bool] = lambda _: True, global_layer_func: Layer_func_t = lambda t: (t,), *, bdbr_anchor_func: Anchor_func_t = None, bdbr_filter: Callable[[str], bool] = None, bdbr_layer_func: Layer_func_t = None, bits_anchor_func: Anchor_func_t = None, bits_filter: Callable[[str], bool] = None, bits_layer_func: Layer_func_t = None, psnr_anchor_func: Anchor_func_t = None, psnr_filter: Callable[[str], bool] = None, psnr_layer_func: Layer_func_t = None, time_anchor_func: Anchor_func_t = None, time_filter: Callable[[str], bool] = None, time_layer_func: Layer_func_t = None, name: str = "") -> dict:
     layered_bdbr = layered_bits = layered_psnr = layered_time = None
     
     if global_anchor_func:
