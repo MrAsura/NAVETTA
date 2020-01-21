@@ -86,9 +86,9 @@ class shmTestInstance(TestInstance):
 
         for (conf,seq,size,name) in it.zip_longest(configs,inputs,self._layer_sizes,input_names,fillvalue=None):
             if name is not None:
-                self._input_names[name] = (conf,seq,size)
+                self._input_names[name] = (conf,seq,size if size else [None])
             else:
-                self._input_names[str(seq)] = (conf,seq,size)
+                self._input_names[str(seq)] = (conf,seq,size if size else [None])
 
         self._input_names_order = input_names
 
