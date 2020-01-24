@@ -6,6 +6,7 @@ import openpyxl as xl
 from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import ColorScaleRule, Rule
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.chart import ScatterChart, Reference, Series
 from enum import Enum, auto
 from typing import Dict, Tuple, Union, List, Callable, Iterable
 
@@ -114,7 +115,7 @@ def create_AnchorSub_definition(definition: Union[None, Tuple[Union[str, Tuple[s
 """
 __TESTS: ((<name>,#lid) | <name>,...)  
 __CHARTS:((<X_Data_type>,<Y_Data_type>),...)
-?_Data_type: psnr | rate | time 
+?_Data_type: 'psnr' | 'rate' | 'time' 
 """
 __TESTS = "tests"
 __CHARTS = "charts"
@@ -124,7 +125,7 @@ dt_CURVE = {__TESTS:(), __CHARTS:()}
 """
 Create Curve Chart definition.
 """
-def create_CurveChart_definition(tests: Iterable[Union[str, Tuple[str, int]]], charts: Iterable[Tuple[int,int]]):
+def create_CurveChart_definition(tests: Iterable[Union[str, Tuple[str, int]]], charts: Iterable[Tuple[str,str]], name: str = ""):
     def processTestName(tn):
         if not tn:
             return None
@@ -138,7 +139,9 @@ def create_CurveChart_definition(tests: Iterable[Union[str, Tuple[str, int]]], c
     definition = dt_CURVE.copy()
     definition[__TESTS] = processTestName(tests)
     chart_data_types = [__PSNR, __RATE, __TIME]
-    definition[__CHARTS] = (c for c in charts if c[0] in chart_data_types and c[1] in chart_data_types)
+    definition[__CHARTS] = [c for c in charts if c[0] in chart_data_types and c[1] in chart_data_types]
+    
+    return create_summary_definition(SummaryType.CURVE, definition, name)
 
 DataRefType = Dict[str,Dict[str,Dict[int,dict]]] #DataRef[<test_name>][<seq>][<lid>] = {__KB, __KBS,__PSNR, __TIME}
 SummaryRefType = Dict[str,Dict[str,dict]] #SummaryRef[<test_name>][<seq>] = {__KB, __KBS,__PSNR, __TIME}
@@ -191,7 +194,7 @@ def makeCurveChart(wb: xl.Workbook, data_refs: DataRefType, order: List[str], de
     name = __get_new_sheetname(wb, definition[__NAME])
     curve_sheet = wb.create_sheet(name)
     expanded_refs = __makeSummary(data_refs)
-    __writeCurveChart(anchor_sheet, expanded_refs, order, **definition[__DEFINITION])
+    __writeCurveChart(curve_sheet, expanded_refs, order, **definition[__DEFINITION])
     wb.active = wb.index(wb[name])
 
 """
@@ -589,32 +592,64 @@ def __writeSummaryDataMatrix(sheet: Worksheet, data: Dict[str, dict], row: int, 
 # curve_chart summary type definitions #
 #######################################
 
-def __writeCurveChart(sheet: Worksheet, data_refs: SummaryRefType, order: List[str] = None, *, bdbr: AnchorSubType, bits: AnchorSubType, psnr: AnchorSubType, time: AnchorSubType, **other: dict) -> None:
-    tests = []
-    refs = __writeCurveChartData(sheet, tests, order, data)
-    __writeCharts(sheet, tests, order, refs)
+def __writeCurveChart(sheet: Worksheet, data_refs: SummaryRefType, order: List[str] = None, *, tests: Iterable[Union[str]], charts: Iterable[Tuple[str,str]], **other: dict) -> None:
+    refs = __writeCurveChartData(sheet, tests, order, data_refs)
+    __writeCharts(sheet, tests, order, charts, refs)
 
 # Write data used by charts and return per test Reference ranges
 def __writeCurveChartData(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], data: Dict[str, dict]) -> dict:
+    from .TestSuite import _PSNR, _KBS, _TIME, parseSheetLayer
     to_write_data = []
     out_ref = {}
+    col = 2
+    ref_len = 5
 
-    for test in tests:
-        to_write_data.append([test,])
-        for seq in order:
-            to_write_data.append([seq,])
+    def toRefFunc(sheet, cells):
+        return ["=" + __SR_FORMAT.format(sheet=parseSheetLayer(sheet)[0], cell = cell) for cell in cells]
 
-            to_write_data.append(["", "Data Type", "Data Point 1", "Data Point 2", "Data Point 3", "Data Point 4"])
+    for seq in order:
+        to_write_data.append([seq,])
+        out_ref[seq] = {}
+        to_write_data.append(["Data Type", "Test", "Data Point 1", "Data Point 2", "Data Point 3", "Data Point 4"])
 
-            to_write_data.append(["", __KBS, data[test][seq][__KBS]]) 
-            to_write_data.append(["", __PSNR, data[test][seq][__PSNR]]) 
-            to_write_data.append(["", __TIME, data[test][seq][__TIME]]) 
+        for test in tests:
+            out_ref[seq][test] = {}
+
+            to_write_data.append([_KBS, test, *toRefFunc(test, data[test][seq][_KBS])]) 
+            to_write_data.append([_PSNR, test, *toRefFunc(test, data[test][seq][_PSNR])]) 
+            to_write_data.append([_TIME, test, *toRefFunc(test, data[test][seq][_TIME])])
+
+            row = len(to_write_data)
+
+            out_ref[seq][test][__RATE] = Reference(sheet, min_col=col, max_col=col + ref_len, min_row = row - 2)
+            out_ref[seq][test][__PSNR] = Reference(sheet, min_col=col, max_col=col + ref_len, min_row = row - 1)
+            out_ref[seq][test][__TIME] = Reference(sheet, min_col=col, max_col=col + ref_len, min_row = row)
 
     for row in to_write_data:
         sheet.append(row)
 
+    # hide chart data
+    sheet.column_dimensions.group('A', 'F', hidden = True)
+
     return out_ref
 
 # Create chart objects based on the given Reference ranges and 
-def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], data: Dict[str, dict]) -> None:
-    pass
+def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], charts: Iterable[Tuple[str,str]], data: Dict[str, dict]) -> None:
+    row = 1
+    for seq in order:
+        col = 0
+        for (typeX, typeY) in charts:
+            chart = ScatterChart(scatterStyle = 'lineMarker')
+            chart.title = seq
+            chart.x_axis.title = typeX
+            chart.y_axis.title = typeY
+            chart.visible_cells_only = False
+            for test in tests:
+                rX = data[seq][test][typeX]
+                rY = data[seq][test][typeY]
+                series = Series(rY, Reference(sheet, min_col = rX.min_col + 1, max_col = rX.max_col, min_row = rX.min_row), title_from_data = True)
+                series.marker.symbol = 'auto'
+                chart.series.append(series)
+            sheet.add_chart(chart, chr(ord('G') + col) + str(row))
+            col += 9
+        row += 15

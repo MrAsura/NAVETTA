@@ -10,7 +10,7 @@ from typing import List, Dict, Tuple, Any, Callable, Union, Iterable, TypeVar, S
 
 from TestInstances import skvzTestInstance, shmTestInstance, kvzTestInstance
 from .TestSuite import makeLayerCombiName
-from .SummaryFactory import create_BDBRMatrix_definition, create_AnchorList_definition
+from .SummaryFactory import create_BDBRMatrix_definition, create_AnchorList_definition, create_CurveChart_definition
 
 
 __round2 = lambda x,base=2: int(base * round(x / base))
@@ -242,6 +242,18 @@ def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor
                                         time_def = layered_time,
                                         name = name)
 
+"""
+Make ChartCurve definition to create charts for bitrate curves or time complexity curves
+"""
+def make_ChartCurve_definition(tests: Iterable[str], layer_func: Layer_func_t = lambda x: [x,], filter_func: Callable[[str],bool] = lambda _: True, br_curve: bool = True, time_curve: bool = True, name: str = "") -> dict:
+    layered_tests = [l_test for test in tests if filter_func(test) for l_test in layer_func(test)]
+    chart_types = []
+    if br_curve:
+        chart_types.append(('rate', 'psnr'))
+    if time_curve:
+        chart_types.append(('rate', 'time'))
+
+    return create_CurveChart_definition(layered_tests, chart_types, name = name)
 
 """
 Define types for parameter sets that defines the behaviour of adding parameter sets

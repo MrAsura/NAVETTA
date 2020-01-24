@@ -136,7 +136,7 @@ class shmTestInstance(TestInstance):
                 cmd.extend([self.__BIN, outfile])
                 if seq is not None:
                     for (lid,qp,size) in it.zip_longest(range(len(seq)),lqp,sizes,fillvalue=None):
-                        cmd.extend([self.__INPUT.format(lid=lid),seq[lid]])
+                        cmd.extend([self.__INPUT.format(lid=lid),cfg.sequence_path + seq[lid]])
                         if size is not None:
                             cmd.extend([self.__WIDTH.format(lid=lid),size[0]])
                             cmd.extend([self.__HEIGHT.format(lid=lid),size[1]])

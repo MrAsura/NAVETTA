@@ -10,6 +10,7 @@ import operator as op
 def main():
     seqs = cfg.sequences
     seq_names = cfg.sequence_names
+    seq_names[cfg.Kimono1] = "Kimono1"
     version = 1
 
     outname = r"kvz_gop_level_param_selection"
@@ -39,8 +40,11 @@ def main():
 
     summary2 = TU.make_AnchorList_singleAnchor_definition("kvz_ultrafast", TU.get_test_names(tests), test_filter = lambda _, test: "ultrafast" in test, name="ultrafast_anchor")
     summary3 = TU.make_AnchorList_singleAnchor_definition("kvz_veryslow", TU.get_test_names(tests), test_filter = lambda _, test: "veryslow" in test, name="veryslow_anchor")
+    summary4 = TU.make_ChartCurve_definition(TU.get_test_names(tests), filter_func=lambda t: "ultrafast" in t, name = "ultrafast_curve")
+    summary5 = TU.make_ChartCurve_definition(TU.get_test_names(tests), filter_func=lambda t: "veryslow" in t, name = "veryslow_curve")
 
-    runTests(tests, outname, summary, summary2, summary3)
+
+    runTests(tests, outname, summary, summary2, summary3, summary4, summary5)
 
 if __name__ == "__main__":
     print("Execute test file " + __file__)

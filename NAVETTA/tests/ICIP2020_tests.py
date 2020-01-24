@@ -41,7 +41,7 @@ def main():
 
     tpg_scal.set_param_group_transformer(TU.transformerFactory(test_name = lambda *, _dqp, _type, **param: "SCAL_{}_DQP{}".format(_type, _dqp),
                                                                qps = lambda *, _dqp, **param: tuple(zip(base_qp, [bqp + _dqp for bqp in base_qp])),
-                                                               inputs = lambda *, _type, inputs, **param: inputs if _type == SNR else
+                                                               inputs = lambda *, _type, inputs, **param: ([(seq, seq) for (seq,) in inputs]) if _type == SNR else
                                                                      TU.generate_scaled_seq_names(inputs, scale) if _type == SCAL else
                                                                      TU.generate_scaled_seq_names(inputs, hscale),
                                                                configs = lambda *, _type, input_names, **param: [ (cfg.shm_cfg + "encoder_lowdelay_P_scalable.cfg", cfg.shm_cfg + "layers.cfg", cfg.shm_cfg + seq.split("_")[1] + "-" + _type + ".cfg") for seq in input_names]))
@@ -84,8 +84,9 @@ def main():
                                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])))
 
     summaries = [matrix_summary, anchor_summary]
+    tests = tests_scal + tests_sim
 
-    runTests(tests_scal + tests_sim, outname, *summaries,
+    runTests(tests, outname, *summaries,
              layer_combi = combi)
 
 if __name__ == "__main__":
