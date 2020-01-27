@@ -113,7 +113,7 @@ def create_AnchorSub_definition(definition: Union[None, Tuple[Union[str, Tuple[s
     return {processTestName(name): processTestName(val) for (name, val) in definition if val}
 
 """
-__TESTS: ((<name>,#lid) | <name>,...)  
+__TESTS: ((<test_name>,...)  
 __CHARTS:((<X_Data_type>,<Y_Data_type>),...)
 ?_Data_type: 'psnr' | 'rate' | 'time' 
 """
@@ -123,7 +123,7 @@ __RATE = "rate"
 dt_CURVE = {__TESTS:(), __CHARTS:()}
 
 """
-Create Curve Chart definition.
+Create Curve Chart definition. Takes in a list of test names with optional layer ids (<name>,#lid)
 """
 def create_CurveChart_definition(tests: Iterable[Union[str, Tuple[str, int]]], charts: Iterable[Tuple[str,str]], name: str = ""):
     def processTestName(tn):

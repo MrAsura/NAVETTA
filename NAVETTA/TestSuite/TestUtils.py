@@ -244,6 +244,11 @@ def make_AnchorList_multiAnchor_definition(test_in: Iterable[str], global_anchor
 
 """
 Make ChartCurve definition to create charts for bitrate curves or time complexity curves
+@param tests An iterable of test names (potentially) added to the definitian and each chart
+@param layer_func a function that takes in test names and should return an iterable with optional (test name,layer#) pairs or plain strings that are added to the definition
+@param filter_func a function that takes in a name from tests and returns true if the tests should be added to the definition
+@param br_curve a bool if a bitrate vs. quality curve should be included
+@param time_curve a bool if a bitrate vs. time curve should be included
 """
 def make_ChartCurve_definition(tests: Iterable[str], layer_func: Layer_func_t = lambda x: [x,], filter_func: Callable[[str],bool] = lambda _: True, br_curve: bool = True, time_curve: bool = True, name: str = "") -> dict:
     layered_tests = [l_test for test in tests if filter_func(test) for l_test in layer_func(test)]
