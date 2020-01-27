@@ -602,7 +602,7 @@ def __writeCurveChartData(sheet: Worksheet, tests: Iterable[str], order: Iterabl
     to_write_data = []
     out_ref = {}
     col = 2
-    ref_len = 5
+    ref_len = 4
 
     def toRefFunc(sheet, cells):
         return ["=" + __SR_FORMAT.format(sheet=parseSheetLayer(sheet)[0], cell = cell) for cell in cells]
@@ -647,7 +647,15 @@ def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], 
             for test in tests:
                 rX = data[seq][test][typeX]
                 rY = data[seq][test][typeY]
-                series = Series(rY, Reference(sheet, min_col = rX.min_col + 1, max_col = rX.max_col, min_row = rX.min_row), title_from_data = True)
+                series = Series(Reference(sheet,
+                                          min_col = rY.min_col,
+                                          max_col = rY.max_col,
+                                          min_row = rY.min_row), 
+                                Reference(sheet, 
+                                          min_col = rX.min_col + 1, 
+                                          max_col = rX.max_col, 
+                                          min_row = rX.min_row), 
+                                title_from_data = True)
                 series.marker.symbol = 'auto'
                 chart.series.append(series)
             sheet.add_chart(chart, get_column_letter(7 + col) + str(row))
