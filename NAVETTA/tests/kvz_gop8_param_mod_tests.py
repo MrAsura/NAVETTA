@@ -42,7 +42,7 @@ def main():
     summary3 = TU.make_AnchorList_singleAnchor_definition("kvz_veryslow", TU.get_test_names(tests), test_filter = lambda _, test: "veryslow" in test, name="veryslow_anchor")
     summary4 = TU.make_CurveChart_definition(TU.get_test_names(tests), filter_func=lambda t: "ultrafast" in t, name = "ultrafast_curve")
     summary5 = TU.make_CurveChart_definition(TU.get_test_names(tests), filter_func=lambda t: "veryslow" in t, name = "veryslow_curve")
-
+    summary5["definition"]["charts"].extend([('psnr','rate'),('psnr','time'),('time','rate'),('time','psnr')])
 
     runTests(tests, outname, summary, summary2, summary3, summary4, summary5)
 

@@ -650,6 +650,6 @@ def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], 
                 series = Series(rY, Reference(sheet, min_col = rX.min_col + 1, max_col = rX.max_col, min_row = rX.min_row), title_from_data = True)
                 series.marker.symbol = 'auto'
                 chart.series.append(series)
-            sheet.add_chart(chart, chr(ord('G') + col) + str(row))
+            sheet.add_chart(chart, get_column_letter(7 + col) + str(row))
             col += 9
         row += 15
