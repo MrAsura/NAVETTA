@@ -59,7 +59,9 @@ def main():
                                                               configs = lambda *, input_names, **param: [ (cfg.shm_cfg + "encoder_lowdelay_P_scalable.cfg", cfg.shm_cfg + seq.split("_")[1] + ".cfg") for seq in input_names],
                                                               inputs = lambda *, inputs, _type, **param: inputs if _type == SNR else
                                                               TU.generate_scaled_seq_names(inputs, (scale[0],)) if _type == SCAL else
-                                                              TU.generate_scaled_seq_names(inputs, (hscale[0],))))
+                                                              TU.generate_scaled_seq_names(inputs, (hscale[0],)),
+                                                              input_layer_scales = lambda *, _type, **param: tuple() if _type == SNR else (1,)
+                                                             ))
 
 
     #Run tests
@@ -83,7 +85,12 @@ def main():
                                                                time_anchor_func = TU.anchorFuncFactory_match_layer(
                                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])))
 
-    summaries = [matrix_summary, anchor_summary]
+    curve_summary1 = TU.make_CurveChart_definition(test_names + TU.get_test_names(tests_sim), filter_func = lambda x: ("2x" in x) or ("SNR_DQP0" == x or "1÷2x" == x))
+    curve_summary2 = TU.make_CurveChart_definition(test_names + TU.get_test_names(tests_sim), filter_func = lambda x: ("1.5x" in x) or ("SNR_DQP0" == x or "1÷1.5x" == x))
+    curve_summary3 = TU.make_CurveChart_definition(test_names + TU.get_test_names(tests_sim), filter_func = lambda x: ("DQP-3" in x) or ("SNR_DQP0" == x or "SNR_DQP-3" == x))
+    curve_summary4 = TU.make_CurveChart_definition(test_names + TU.get_test_names(tests_sim), filter_func = lambda x: ("DQP-9" in x) or ("SNR_DQP0" == x or "SNR_DQP-9" == x))
+
+    summaries = [matrix_summary, anchor_summary, curve_summary1, curve_summary2, curve_summary3, curve_summary4]
     tests = tests_scal + tests_sim
 
     runTests(tests, outname, *summaries,

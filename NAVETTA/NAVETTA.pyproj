@@ -52,6 +52,9 @@
     <Compile Include="TestSuite\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="tests\bframe_constraint_test.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="tests\ICIP2020_tests.py">
       <SubType>Code</SubType>
     </Compile>
@@ -59,6 +62,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tests\kvz_gop8_param_mod_tests.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\kvz_gop8_param_search_mod_tests.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\merge_cand_check_skip_test.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tests\test_new_functionality.py">
