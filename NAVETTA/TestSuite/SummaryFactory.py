@@ -243,9 +243,9 @@ def getMaxLength( string_list: list ) -> str:
 
 
 __S_BDRATE_FORMAT = "=bdrate({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{})"
-__S_BIT_FORMAT = "=AVERAGE({},{},{},{})/AVERAGE({},{},{},{})"
-__S_TIME_FORMAT = "=AVERAGE({},{},{},{})/AVERAGE({},{},{},{})"
-__S_PSNR_FORMAT = "=AVERAGE({},{},{},{})-AVERAGE({},{},{},{})"
+__S_BIT_FORMAT = "=(1/AVERAGE({},{},{},{}))*AVERAGE({},{},{},{})"
+__S_TIME_FORMAT = "=(1/AVERAGE({},{},{},{}))*AVERAGE({},{},{},{})"
+__S_PSNR_FORMAT = "=-AVERAGE({},{},{},{})+AVERAGE({},{},{},{})"
 __SR_FORMAT = r"'{sheet}'!{cell}"
 
 __S_BIT_ABS_FORMAT = "=AVERAGE({},{},{},{})"
@@ -591,6 +591,7 @@ def __writeSummaryDataMatrix(sheet: Worksheet, data: Dict[str, dict], row: int, 
 #######################################
 # curve_chart summary type definitions #
 #######################################
+__DATA = "data"
 
 def __writeCurveChart(sheet: Worksheet, data_refs: SummaryRefType, order: List[str] = None, *, tests: Iterable[Union[str]], charts: Iterable[Tuple[str,str]], **other: dict) -> None:
     refs = __writeCurveChartData(sheet, tests, order, data_refs)
@@ -636,6 +637,19 @@ def __writeCurveChartData(sheet: Worksheet, tests: Iterable[str], order: Iterabl
 # Create chart objects based on the given Reference ranges and 
 def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], charts: Iterable[Tuple[str,str]], data: Dict[str, dict]) -> None:
     row = 1
+    bound_scale = 10;
+    def updateBounds(bounds, x_data, y_data):
+        from statistics import mean
+        if not bounds:
+            bounds = [0, 0, 0, 0, 0, 0, 0]
+        bounds[0] = min(bounds[0], *x_data)
+        bounds[1] = max(bounds[1], *x_data)
+        bounds[2] = mean(bounds[2], *x_data)
+        bounds[3] = min(bounds[3], *y_data)
+        bounds[4] = max(bounds[4], *y_data)
+        bounds[5] = mean(bounds[5], *y_data)
+        return bounds
+
     for seq in order:
         col = 0
         for (typeX, typeY) in charts:
@@ -644,7 +658,9 @@ def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], 
             chart.x_axis.title = typeX
             chart.y_axis.title = typeY
             chart.visible_cells_only = False
+            bounds = None
             for test in tests:
+                #bounds = updateBounds(bounds, data[seq][test][__DATA][typeX], data[seq][test][__DATA][typeY])
                 rX = data[seq][test][typeX]
                 rY = data[seq][test][typeY]
                 series = Series(Reference(sheet,
@@ -658,6 +674,11 @@ def __writeCharts(sheet: Worksheet, tests: Iterable[str], order: Iterable[str], 
                                 title_from_data = True)
                 series.marker.symbol = 'auto'
                 chart.series.append(series)
+            if bounds:
+                sheet.x_axis.scaling.min = max(bounds[0] - bounds[2] / bound_scale, 0)
+                sheet.x_axis.scaling.max = bounds[1] + bounds[2] / bound_scale
+                sheet.y_axis.scaling.min = max(bounds[3] - bounds[5] / bound_scale, 0)
+                sheet.y_axis.scaling.max = bounds[4] + bounds[5] / bound_scale
             sheet.add_chart(chart, get_column_letter(7 + col) + str(row))
             col += 9
         row += 15

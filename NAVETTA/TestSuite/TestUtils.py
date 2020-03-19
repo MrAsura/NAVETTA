@@ -8,7 +8,7 @@ from enum import Enum, auto
 from copy import deepcopy
 from typing import List, Dict, Tuple, Any, Callable, Union, Iterable, TypeVar, SupportsFloat
 
-from TestInstances import skvzTestInstance, shmTestInstance, kvzTestInstance
+from TestInstances import TestInstance, skvzTestInstance, shmTestInstance, kvzTestInstance
 from .TestSuite import makeLayerCombiName
 from .SummaryFactory import create_BDBRMatrix_definition, create_AnchorList_definition, create_CurveChart_definition
 
@@ -126,7 +126,7 @@ Get test names for given test instances
 @param test_instances an iterable of test instances
 @return list of test instance names
 """
-def get_test_names(test_instances: Iterable[skvzTestInstance]) -> List[str]:
+def get_test_names(test_instances: Iterable[TestInstance]) -> List[str]:
     return [test._test_name for test in test_instances]
 
 

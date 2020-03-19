@@ -25,6 +25,7 @@ class TestInstance(abc.ABC):
     @abc.abstractmethod
     def __init__(self, test_name, inputs, input_sizes=[()], input_names=[()], layer_args=(), layer_sizes=[()], input_layer_scales=(), qps=(22, 27, 32, 37), out_name=r"out\\out", bin_name="", version=0, **misc):
         self._results = {}
+        self._test_name = test_name
         pass
 
     """
