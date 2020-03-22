@@ -5,13 +5,14 @@ Configure parameters
 from os.path import abspath
 
 sequence_path = r"D:\seqs\\"
-skvz_bin = r"D:\bins\skvz_v6.exe"
-skvz_ver_bin = r"D:\bins\skvz_v{}.exe"
-shm_bin = r"D:\bins\shm.exe"
-shm_cfg = f"D:\cfg\\"
+bin_path = r"D:\bins\\"
+skvz_bin = f"{bin_path}skvz_v6.exe"
+skvz_ver_bin = f"{bin_path}skvz_v{}.exe"
+shm_bin = f"{bin_path}shm.exe"
+shm_cfg = r"D:\cfg\\"
 results = r"F:\r\NAVETTA\\"#r"D:\r\notvenctester\\"#r"F:\r\NAVETTA\\"
 
-decoder_bin = r"D:\bins\TAppDecoder.exe" #Used for verifying encodings
+decoder_bin = f"{bin_path}TAppDecoder.exe" #Used for verifying encodings
 
 exel_template = abspath(r"..\BD-rate-template.xlsm")
 
