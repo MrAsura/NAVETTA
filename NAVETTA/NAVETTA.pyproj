@@ -74,6 +74,9 @@
     <Compile Include="tests\merge_cand_check_skip_test.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="tests\test_conformance.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="tests\test_new_functionality.py">
       <SubType>Code</SubType>
     </Compile>

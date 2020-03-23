@@ -7,7 +7,7 @@ from os.path import abspath
 sequence_path = r"D:\seqs\\"
 bin_path = r"D:\bins\\"
 skvz_bin = f"{bin_path}skvz_v6.exe"
-skvz_ver_bin = f"{bin_path}skvz_v{}.exe"
+skvz_ver_bin = bin_path + r"skvz_v{}.exe"
 shm_bin = f"{bin_path}shm.exe"
 shm_cfg = r"D:\cfg\\"
 results = r"F:\r\NAVETTA\\"#r"D:\r\notvenctester\\"#r"F:\r\NAVETTA\\"
