@@ -112,9 +112,9 @@ def main():
 
     skvz_combi = TU.generate_combi(skvz_tpg_sim,
                                   combi_cond = TU.combiFactory(
-                                      lambda g1, g2: (g1["_type"] == SNR == g2["_type"]) or (g1["_type"] == SNR != g2["_type"] and g1["_dqp"] == 0) or (g2["_type"] == SNR != g1["_type"] and g2["_dqp"] == 0),
+                                      lambda g1, g2: (g1["_type"] == SNR == g2["_type"]) or (g1["_type"] == SNR != g2["_type"]) or (g2["_type"] == SNR != g1["_type"]),
                                   _type = lambda t1, t2: -1 if t1 != SNR == t2 else 1 if t1 == SNR != t2 else t1 == t2,
-                                  _dqp = lambda d1, d2: True if d2 == d1 == 0 else d2 if d1 == 0 else (-d1 if d2 == 0 else 0)))
+                                  _dqp = lambda d1, d2: True if d2 == d1 == 0 else d2 - d1))
 
     shm_combi = TU.generate_combi(shm_tpg_sim, 
                                   combi_cond = TU.combiFactory(lambda g1, g2: (g1["_type"] == SNR == g2["_type"]) or (g1["_type"] == SNR != g2["_type"] and g1["_dqp"] == 0) or (g2["_type"] == SNR != g1["_type"] and g2["_dqp"] == 0),
