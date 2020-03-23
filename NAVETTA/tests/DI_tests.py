@@ -73,7 +73,7 @@ def main():
                                  layer_args = shared_param)
 
     skvz_tpg_sim.set_param_group_transformer(
-        TU.transformerFactory(test_name = lambda *, _dqp, _type, **param: "SKVZ_{}_DQP{}".format(_type, _dqp),
+        TU.transformerFactory(test_name = lambda *, _dqp, _type, **param: "SKVZ_{}_DQP{}".format(_type, _dqp) if _type == SNR else "SKVZ_1/{}".format(_type),
                               qps = lambda *, _dqp, **param: tuple(bqp + _dqp for bqp in base_qp),
                               layer_args = lambda *, layer_args, **param: (layer_args,),
                               inputs = lambda *, inputs, _type, **param: sim_scaling[_type](inputs))
@@ -111,12 +111,10 @@ def main():
     shm_tests_sim = shm_tpg_sim.to_shm_test_instance()
 
     skvz_combi = TU.generate_combi(skvz_tpg_sim,
-                                   combi_cond = TU.combiFactory(lambda g1, g2: (g1["_type"] == SNR == g2["_type"]) or (g1["_type"] == SNR != g2["_type"] and g1["_dqp"] == 0) or (g2["_type"] == SNR != g1["_type"] and g2["_dqp"] == 0),
-                                                                lambda g1, g2: (g1["_type"] == SNR or g1["_dqp"] == 0) and (g2["_type"] == SNR or g2["_dqp"] == 0),
-                                                                lambda g1, g2: (g1["_type"] != SNR or g1["_dqp"] != 0) and (g2["_type"] != SNR or g2["_dqp"] != 0),
-                                                                _type = lambda t1, t2: -1 if t1 != SNR == t2 else 1 if t1 == SNR != t2 else t1 == t2,
-                                                                _dqp = lambda d1, d2: True if d2 == d1 == 0 else d2 if d1 == 0 else (-d1 if d2 == 0 else 0))
-                                   )
+                                  combi_cond = TU.combiFactory(
+                                      lambda g1, g2: (g1["_type"] == SNR == g2["_type"]) or (g1["_type"] == SNR != g2["_type"] and g1["_dqp"] == 0) or (g2["_type"] == SNR != g1["_type"] and g2["_dqp"] == 0),
+                                  _type = lambda t1, t2: -1 if t1 != SNR == t2 else 1 if t1 == SNR != t2 else t1 == t2,
+                                  _dqp = lambda d1, d2: True if d2 == d1 == 0 else d2 if d1 == 0 else (-d1 if d2 == 0 else 0)))
 
     shm_combi = TU.generate_combi(shm_tpg_sim, 
                                   combi_cond = TU.combiFactory(lambda g1, g2: (g1["_type"] == SNR == g2["_type"]) or (g1["_type"] == SNR != g2["_type"] and g1["_dqp"] == 0) or (g2["_type"] == SNR != g1["_type"] and g2["_dqp"] == 0),
