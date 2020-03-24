@@ -6,7 +6,7 @@ import re
 import itertools as it
 from enum import Enum, auto
 from copy import deepcopy
-from typing import List, Dict, Tuple, Any, Callable, Union, Iterable, TypeVar, SupportsFloat
+from typing import List, Dict, Tuple, Any, Callable, Union, Iterable, TypeVar, SupportsFloat, Sequence
 
 from TestInstances import TestInstance, skvzTestInstance, shmTestInstance, kvzTestInstance
 from .TestSuite import makeLayerCombiName
@@ -23,7 +23,7 @@ __scal_seq_map = lambda scale: lambda seq: (__seq_map(scale[0],seq[0]),) + seq #
 """
 Generate sequence names for scaled inputs per layer
 """
-def generate_scaled_seq_names(seqs: Iterable[Tuple[str]], scales: Iterable[SupportsFloat]) -> List[Tuple[str,...]]:
+def generate_scaled_seq_names(seqs: Iterable[Sequence[str]], scales: Iterable[SupportsFloat]) -> List[Sequence[str]]:
     return [tuple(__seq_map(scale, seq[0]) if scale != 1 else seq[0] for scale in scales) for seq in seqs]
 
 
@@ -76,9 +76,10 @@ def combiFactory(*arbitrary_funcs: List[Callable[[dict,dict], Union[int,bool]]],
 @param tpqs should be a list of TestParameterGroups that are used for forming the combi definitions
 @param combi_cond a function that takes in two parameter groups and return a true/non-zero value if parameter groups should be combined. In order to enforce an ordering the combi_cond should return a negative value if pg1 < pg2 (i.e. pg1 should be first in the final combi tuple) and vice versa. The function should be f(a,b)=-f(b,a)
 @param name_func function that returns the value used for forming identifying the combi tests in TestSuite
+@param transform_func allow performing an additional transformation on the generated combination sets returning a list of modified sets 
 Return the combination definition used by TestSuite to combine results.
 """
-def generate_combi(*tpqs: List['TestParameterGroup'], combi_cond: Callable[[dict,dict], int], name_func: Callable[...,str] = lambda **p: get_test_names([skvzTestInstance(**p),])[0]) -> List[Tuple[str]]:
+def generate_combi(*tpqs: List['TestParameterGroup'], combi_cond: Callable[[dict,dict], int], name_func: Callable[...,str] = lambda **p: get_test_names([skvzTestInstance(**p),])[0], transform_func: Callable[[Sequence[str]], List[tuple]] = lambda s: [s,]) -> List[Sequence[str]]:
     #loop over all tpqs
     tmp_combi = []
     for tpq in tpqs:    
@@ -107,6 +108,7 @@ def generate_combi(*tpqs: List['TestParameterGroup'], combi_cond: Callable[[dict
     for combi in tmp_combi:
         if not combi in final_combi:
             final_combi.append(combi)
+    final_combi = [combi for combi in transform_func(combi_set) for combi_set in final_combi]
 
     return final_combi
 
@@ -117,7 +119,7 @@ Get combi names from the given combis
 @param combi_name_func function used for generating the combi name
 @return list of combi names
 """
-def get_combi_names(combi_definition: Iterable[Tuple[str]], combi_name_func: Callable[[Iterable[str]],str] = makeLayerCombiName) -> List[str]:
+def get_combi_names(combi_definition: Iterable[Sequence[str]], combi_name_func: Callable[[Iterable[str]],str] = makeLayerCombiName) -> List[str]:
     return [combi_name_func(combi) for combi in combi_definition]
 
 
@@ -140,7 +142,7 @@ make BDBRMatrix definition ()
 @param name name used for the summary definition
 @return a BDBRMatrix definition
 """
-def make_BDBRMatrix_definition(test_names: Iterable[str], layering_func: Callable[[str],Tuple[int]] = lambda _: (-1,), filter_func: Callable[[str],bool] = lambda _: True, write_bdbr: bool = True, write_bits: bool = True, write_psnr: bool = True, write_time: bool = True, name: str = "") -> dict:
+def make_BDBRMatrix_definition(test_names: Iterable[str], layering_func: Callable[[str],Sequence[int]] = lambda _: (-1,), filter_func: Callable[[str],bool] = lambda _: True, write_bdbr: bool = True, write_bits: bool = True, write_psnr: bool = True, write_time: bool = True, name: str = "") -> dict:
     layers = {name : layering_func(name) if filter_func(name) else tuple() for name in test_names}
     return create_BDBRMatrix_definition(layers, write_bdbr, write_bits, write_psnr, write_time, name)
 
