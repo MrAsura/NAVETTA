@@ -76,7 +76,7 @@ def combiFactory(*arbitrary_funcs: List[Callable[[dict,dict], Union[int,bool]]],
 @param tpqs should be a list of TestParameterGroups that are used for forming the combi definitions
 @param combi_cond a function that takes in two parameter groups and return a true/non-zero value if parameter groups should be combined. In order to enforce an ordering the combi_cond should return a negative value if pg1 < pg2 (i.e. pg1 should be first in the final combi tuple) and vice versa. The function should be f(a,b)=-f(b,a)
 @param name_func function that returns the value used for forming identifying the combi tests in TestSuite
-@param transform_func allow performing an additional transformation on the generated combination sets returning a list of modified sets 
+@param transform_func allow performing an additional transformation on the generated combination sets returning a list of sub-sets 
 Return the combination definition used by TestSuite to combine results.
 """
 def generate_combi(*tpqs: List['TestParameterGroup'], combi_cond: Callable[[dict,dict], int], name_func: Callable[...,str] = lambda **p: get_test_names([skvzTestInstance(**p),])[0], transform_func: Callable[[Sequence[str]], List[tuple]] = lambda s: [s,]) -> List[Sequence[str]]:
@@ -103,12 +103,16 @@ def generate_combi(*tpqs: List['TestParameterGroup'], combi_cond: Callable[[dict
         #transform into final combi definition (sort combis and remove combis with only one group and dublicate groups)
         tmp_combi += [tuple(name_func(**cmb) for cmb in combi_sort(combis)) for combis in combi if len(combis) > 1]
     
-        #Remove dublicate elements
+    #Remove dublicate elements and perform transform
     final_combi = []
     for combi in tmp_combi:
         if not combi in final_combi:
             final_combi.append(combi)
-    final_combi = [combi for combi in transform_func(combi_set) for combi_set in final_combi]
+    tmp_combi = [combi for combi_set in final_combi for combi in transform_func(combi_set)]
+    final_combi = []
+    for combi in tmp_combi:
+        if not combi in final_combi:
+            final_combi.append(combi)
 
     return final_combi
 

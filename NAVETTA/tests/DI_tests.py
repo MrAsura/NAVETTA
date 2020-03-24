@@ -77,7 +77,8 @@ def main():
                               qps = lambda *, _dqp, **param: tuple(bqp + _dqp for bqp in base_qp),
                               layer_args = lambda *, layer_args, **param: (layer_args,),
                               inputs = lambda *, inputs, _type, **param: sim_scaling[_type](inputs))
-        )
+        )\
+        .filter_parameter_group(lambda *, _dqp, _type, **param: True if _type == SNR or _dqp == 0 else False)
 
     # Set shm scalable param
     base_conf = cfg.shm_cfg + "encoder_lowdelay_P_scalable.cfg"
@@ -112,8 +113,10 @@ def main():
 
     skvz_combi = TU.generate_combi(skvz_tpg_sim,
                                   combi_cond = TU.combiFactory(
-                                      lambda g1, g2: g1["_dqp"] - g2["_dqp"] if (g1["_type"] == SNR == g2["_type"]) else (1 if (g1["_type"] == SNR != g2["_type"]) else (-1 if (g2["_type"] == SNR != g1["_type"]) else False)),
-                                      _dqp = lambda d1, d2: d1 == 0 or d2 == 0)
+                                      lambda g1, g2: False if (g1["_type"] in [SCAL, HSCAL] and g2["_type"] in [SCAL, HSCAL]) else True,
+                                      _type = lambda t1, t2: 1 if t1 == SNR != t2 else True if t1 == t2 == SNR else -1,
+                                      _dqp = lambda d1, d2: 1 if d1 < d2 else -1 if d1 != d2 else True),
+                                  transform_func = lambda s: [(ss2, ss1) for ss1 in s[1:] for ss2 in s[0:2]]
                                   )
 
     shm_combi = TU.generate_combi(shm_tpg_sim, 
@@ -167,7 +170,7 @@ def main():
 
     #Run tests
     runTests(tests_scal + tests_sim, outname, *summaries,
-             layer_combi = combi)
+             layer_combi = skvz_combi + shm_combi)
 
 if __name__ == "__main__":
     print("Execute test file " + __file__)
