@@ -137,10 +137,10 @@ def main():
          TU.make_AnchorList_multiAnchor_definition(skvz_test_names,
                                                    global_filter = lambda t: True if "SCAL" in t else False,
                                                    bdbr_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                     lambda t: tuple(a for a in skvz_sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a))),
+                                                     lambda t: tuple(a for a in skvz_sim_names if ((t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) if (t.split(sep='_')[2]) != SNR else (t.split(sep='_')[2] in a.split(sep='_')[3:]) and ((t.split(sep='_')[2] in a.split(sep='_')[0:3])) and (t.split(sep='_')[3] in a.split(sep='_')[3:])))),
                                                    bdbr_layer_func = TU.layerFuncFactory([[None, 1],]),
                                                    time_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                     lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in skvz_sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])),
+                                                     lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in skvz_sim_names if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) for l in [-1, 1])),
                                                    name="SKVZ_LIST")
          )
     # SKVZ param matrix
@@ -150,10 +150,10 @@ def main():
         TU.make_AnchorList_multiAnchor_definition(shm_test_names,
                                                   global_filter = lambda t: True if "SCAL" in t else False,
                                                   bdbr_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                    lambda t: tuple(a for a in shm_sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a))),
+                                                    lambda t: tuple(a for a in shm_sim_names if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a))),
                                                   bdbr_layer_func = TU.layerFuncFactory([[None, 1],]),
                                                   time_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in shm_sim_names if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])),
+                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in shm_sim_names if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) for l in [-1, 1])),
                                                   name="SHM_LIST")
                      )
     # SHM vs. SKVZ
@@ -161,10 +161,10 @@ def main():
         TU.make_AnchorList_multiAnchor_definition(skvz_test_names,
                                                 global_filter = lambda t: True if "SCAL" in t else False,
                                                 bdbr_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                    lambda t: tuple(a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a))),
+                                                    lambda t: tuple(a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a))),
                                                 bdbr_layer_func = TU.layerFuncFactory([[None, 1],]),
                                                 time_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[1] in a) and (t.split(sep='_')[2] in a) for l in [-1, 1])),
+                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) for l in [-1, 1])),
                                                 name="SKVZ_vs_SHM")
         )
 
