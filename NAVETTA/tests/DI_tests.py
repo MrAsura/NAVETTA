@@ -13,6 +13,7 @@ def main():
     ver = 26
     
     dqps = (2, 0, -3, -6, -9)
+    ext_dqps = tuple(range(2, -10, -1))
     base_qp = (22, 27, 32, 37)
     
     outname = "DI_tests_v{}".format(ver)
@@ -27,8 +28,7 @@ def main():
     skvz_tpg_scal.add_const_param(version = ver,
                                   input_names = in_names,
                                   inputs = seqs) \
-                 .add_param_set(_dqp = dqps,
-                                _type = [SNR, SCAL, HSCAL]) \
+                 .add_param_set(_type = [SNR, SCAL, HSCAL]) \
             #.filter_parameter_group(lambda *, _dqp, _type, **param: True if _type == SNR or _dqp == 0 else False)
 
     skvz_tpg_sim = skvz_tpg_scal.copy()
@@ -56,7 +56,8 @@ def main():
 
     skvz_tpg_scal.add_const_param(layer_args = shared_param,
                                   retries = 5,
-                                  bin_name = cfg.skvz_ver_bin.format(ver))
+                                  bin_name = cfg.skvz_ver_bin.format(ver)) \
+                 .add_param_set(_dqp = ext_dqps)
 
     #tpg_scal.filter_parameter_group(lambda *, _dqp, _type, **param: False if _type == SNR and _dqp == 0 else True)
 
@@ -71,7 +72,8 @@ def main():
     # Set kvazaar simulcast param
     skvz_tpg_sim.add_const_param(bin_name = cfg.skvz_ver_bin.format(ver),
                                  validate = False,
-                                 layer_args = shared_param)
+                                 layer_args = shared_param) \
+                .add_param_set(_dqp = ext_dqps)
 
     skvz_tpg_sim.set_param_group_transformer(
         TU.transformerFactory(test_name = lambda *, _dqp, _type, **param: "SKVZ_{}_DQP{}".format(_type, _dqp) if _type == SNR else "SKVZ_1÷{}".format(_type),
@@ -93,7 +95,8 @@ def main():
                                 [ (base_conf, layer_conf, cfg.shm_cfg + seq.split("_")[1] + "-" + _type + ".cfg") for seq in input_names])
         )\
             .filter_parameter_group(lambda *, _dqp, _type, **param: True if _type == SNR or _dqp >= 0 else False)\
-            .filter_parameter_group(lambda *, _dqp, _type, **param: False if _type == SNR and _dqp >= 0 else True)
+            .filter_parameter_group(lambda *, _dqp, _type, **param: False if _type == SNR and _dqp >= 0 else True) \
+            .add_param_set(_dqp = dqps)
 
     # Set shm simulcast param
     shm_tpg_sim.set_param_group_transformer(
@@ -104,7 +107,8 @@ def main():
                               inputs = lambda *, inputs, _type, **param: sim_scaling[_type](inputs),
                               input_layer_scales = lambda *, _type, **param: tuple() if _type == SNR else (1,))
         )\
-            .filter_parameter_group(lambda *, _dqp, _type, **param: True if _type == SNR or _dqp == 0 else False)
+            .filter_parameter_group(lambda *, _dqp, _type, **param: True if _type == SNR or _dqp == 0 else False) \
+            .add_param_set(_dqp = dqps)
 
     #Get tests
     skvz_tests_scal = skvz_tpg_scal.to_skvz_test_instance()
@@ -126,6 +130,7 @@ def main():
                                                                _dqp = lambda d1, d2: True if d2 == d1 == 0 else -abs(d2) if d1 == 0 else (abs(d1) if d2 == 0 else 0)))
 
     shm_combi.append(('SHM_1÷1.5X', 'SHM_SNR_DQP0'))
+    shm_combi.append(('SHM_1÷2X', 'SHM_SNR_DQP0'))
 
     skvz_sim_names = TU.get_combi_names(skvz_combi)
     skvz_test_names = TU.get_test_names(skvz_tests_scal) + skvz_sim_names
@@ -142,7 +147,7 @@ def main():
                                                      lambda t: tuple(a for a in skvz_sim_names if ((t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) if (t.split(sep='_')[2]) != SNR else (t.split(sep='_')[2] in a.split(sep='_')[3:]) and ((t.split(sep='_')[2] in a.split(sep='_')[0:3])) and (t.split(sep='_')[3] in a.split(sep='_')[3:])))),
                                                    bdbr_layer_func = TU.layerFuncFactory([[None, 1],]),
                                                    time_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                     lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in skvz_sim_names if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) for l in [-1, 1])),
+                                                     lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in skvz_sim_names if ((t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) if (t.split(sep='_')[2]) != SNR else (t.split(sep='_')[2] in a.split(sep='_')[3:]) and ((t.split(sep='_')[2] in a.split(sep='_')[0:3])) and (t.split(sep='_')[3] in a.split(sep='_')[3:])) for l in [-1, 1])),
                                                    name="SKVZ_LIST")
          )
     # SKVZ param matrix
@@ -166,7 +171,7 @@ def main():
                                                     lambda t: tuple(a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a))),
                                                 bdbr_layer_func = TU.layerFuncFactory([[None, 1],]),
                                                 time_anchor_func = TU.anchorFuncFactory_match_layer(
-                                                    lambda t: (None,) + tuple((a,l) if l >= 0 else a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a) for l in [-1, 1])),
+                                                    lambda t: tuple(a for a in TU.get_test_names(shm_tests_scal) if (t.split(sep='_')[2] in a) and (t.split(sep='_')[3] in a))),
                                                 name="SKVZ_vs_SHM")
         )
 
